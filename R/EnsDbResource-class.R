@@ -6,8 +6,8 @@
 setClass("EnsDbResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "EnsDbResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("ensembldb")
-    ensembldb::EnsDb(cache(getHub(x)))
+    ensembldb::EnsDb(cache(getHub(x), force=force))
 })

@@ -10,17 +10,17 @@
 setClass("EpiMetadataResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "EpiMetadataResource",
-   function(x, ...)
+   function(x, ..., force=FALSE)
 {
-    read.delim(cache(getHub(x)))
+    read.delim(cache(getHub(x), force=force))
 })
 
 setClass("EpiExpressionTextResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "EpiExpressionTextResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
-    yy <- cache(getHub(x))
+    yy <- cache(getHub(x), force=force)
     data <- read.table(yy, header=TRUE, row.names=1)
     if(grepl("chr" ,rownames(data)[1])){
        .require("SummarizedExperiment")
@@ -34,11 +34,11 @@ setMethod(".get1", "EpiExpressionTextResource",
 setClass("EpichmmModelsResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "EpichmmModelsResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("rtracklayer")
     yy <- getHub(x)
-    gr <- rtracklayer::import(cache(yy), format="bed", genome="hg19")
+    gr <- rtracklayer::import(cache(yy, force=force), format="bed", genome="hg19")
     gr <- .mapAbbr2FullName(gr)
     .tidyGRanges(x, gr)
  
@@ -112,14 +112,14 @@ setClass("EpigenomeRoadmapFileResource", contains="AnnotationHubResource")
 ## NOTE: This dispatch class encompasses both broad and narrow peak -
 ##       (Precursors were UCSCNarrowPeak and UCSCBroadPeak?)
 setMethod(".get1", "EpigenomeRoadmapFileResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("rtracklayer")
     yy <- getHub(x)
     extraCols=c(signalValue="numeric", pValue="numeric", qValue="numeric")
     if (grepl("narrow", yy$sourceurl))
         extraCols=c(extraCols, peak="numeric")
-    gr <- rtracklayer::import(cache(yy), format="bed", genome=yy$genome,
+    gr <- rtracklayer::import(cache(yy, force=force), format="bed", genome=yy$genome,
                               extraCols=extraCols)
     .tidyGRanges(x, gr)
 })
@@ -127,18 +127,18 @@ setClass("EpigenomeRoadmapNarrowAllPeaksResource",
          contains="BEDFileResource")
 
 setMethod(".get1", "EpigenomeRoadmapNarrowAllPeaksResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     narrowAllPeaks <- c(peakTagDensity="numeric")
-    callNextMethod(x, extraCols=narrowAllPeaks)
+    callNextMethod(x, extraCols=narrowAllPeaks, force=force)
 })
 
 setClass("EpigenomeRoadmapNarrowFDRResource", 
          contains="BEDFileResource")
 
 setMethod(".get1", "EpigenomeRoadmapNarrowFDRResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     narrowFDR <- c(peakTagDensity="numeric", zScore="numeric")
-    callNextMethod(x, extraCols=narrowFDR)
+    callNextMethod(x, extraCols=narrowFDR, force=force)
 })

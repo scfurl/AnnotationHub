@@ -7,7 +7,7 @@ setClass("AnnotationHubResource", representation(hub="Hub"))
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Accessors 
+### Accessors
 ###
 
 setMethod("hubCache", "AnnotationHubResource",
@@ -15,7 +15,7 @@ setMethod("hubCache", "AnnotationHubResource",
 )
 
 setMethod("hubUrl", "AnnotationHubResource",
-    function(x) hubUrl(x@hub) 
+    function(x) hubUrl(x@hub)
 )
 
 setMethod("getHub", "AnnotationHubResource",
@@ -23,7 +23,7 @@ setMethod("getHub", "AnnotationHubResource",
 )
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-###  Show 
+###  Show
 ###
 
 setMethod("show", "AnnotationHubResource",
@@ -32,13 +32,13 @@ setMethod("show", "AnnotationHubResource",
     cat("class:", class(object), "\n")
 })
 
-setGeneric(".get1", function(x, ...) {
+setGeneric(".get1", function(x, ..., force=FALSE) {
     stopifnot(is(x, "AnnotationHubResource"), length(x) == 1L)
     standardGeneric(".get1")
 })
 
 setMethod(".get1", "AnnotationHubResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     msg <- sprintf("no '.get1' method defined for object
         of class %s, consider defining your own.",
@@ -55,10 +55,10 @@ setMethod(".get1", "AnnotationHubResource",
 setClass("FaFileResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "FaFileResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("Rsamtools")
-    fa <- cache(getHub(x))
+    fa <- cache(getHub(x), force=force)
     Rsamtools::FaFile(file=fa[1],index=fa[2])
 })
 
@@ -67,37 +67,37 @@ setMethod(".get1", "FaFileResource",
 ## Michael's AHCytoData is the only package (I think) that uses RDS.
 ## Added Rds to be compatible with Rda naming scheme.
 setClass("RdsResource", contains="AnnotationHubResource")
-setMethod(".get1", "RdsResource", function(x, ...) readRDS(cache(getHub(x))))
+setMethod(".get1", "RdsResource", function(x, ..., force=FALSE) readRDS(cache(getHub(x), force=force)))
 
 setClass("RDSResource", contains="RdsResource")
-setMethod(".get1", "RDSResource", function(x, ...) callNextMethod(x, ...))
+setMethod(".get1", "RDSResource", function(x, ..., force=FALSE) callNextMethod(x, force=force, ...))
 
 ## Rda
 
 setClass("RdaResource", contains="AnnotationHubResource")
 setMethod(".get1", "RdaResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
-    get(load(cache(getHub(x))))
+    get(load(cache(getHub(x), force=force)))
 })
 
 setClass("data.frameResource", contains="RdaResource")
 
 setClass("GRangesResource", contains="RdaResource")
 setMethod(".get1", "GRangesResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("GenomicRanges")
-    gr <- callNextMethod(x, ...)
+    gr <- callNextMethod(x, force=force, ...)
     .tidyGRanges(x, gr)
 })
 
 setClass("VCFResource", contains="RdaResource")
 setMethod(".get1", "VCFResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("VariantAnnotation")
-    callNextMethod(x, ...)
+    callNextMethod(x, force=force, ...)
 })
 
 ## UCSC chain file
@@ -105,11 +105,11 @@ setClass("ChainFileResource", contains="AnnotationHubResource")
 
 ## trace(AnnotationHub:::.get1, tracer=browser, signature ="ChainFileResource")
 setMethod(".get1", "ChainFileResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("rtracklayer")
     .require("GenomeInfoDb")
-    chain <- cache(getHub(x))
+    chain <- cache(getHub(x), force=force)
     tf <- .gunzip(chain, tempfile())
     tf <- rtracklayer::import.chain(tf)
     tf[GenomeInfoDb::sortSeqlevels(names(tf))]
@@ -118,70 +118,70 @@ setMethod(".get1", "ChainFileResource",
 setClass("TwoBitFileResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "TwoBitFileResource",
-    function(x, ...) 
+    function(x, ..., force=FALSE)
 {
     .require("rtracklayer")
-    bit <- cache(getHub(x))
+    bit <- cache(getHub(x), force=force)
     rtracklayer::TwoBitFile(bit)
 })
 
 setClass("GTFFileResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "GTFFileResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     message("Importing File into R ..")
     .require("rtracklayer")
     .require("GenomeInfoDb")
     yy <- getHub(x)
-    gtf <- rtracklayer::import(cache(yy), format="gtf", genome=yy$genome, ...)
+    gtf <- rtracklayer::import(cache(yy, force=force), format="gtf", genome=yy$genome, ...)
     .tidyGRanges(x, gtf)
 })
 
 setClass("GFF3FileResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "GFF3FileResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("rtracklayer")
     yy <- getHub(x)
-    rtracklayer::import(cache(yy), format="GFF", ...)
+    rtracklayer::import(cache(yy, force=force), format="GFF", ...)
 })
 
 setClass("BigWigFileResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "BigWigFileResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("rtracklayer")
-    er <- cache(getHub(x))
-    rtracklayer::BigWigFile(er) 
+    er <- cache(getHub(x), force=force)
+    rtracklayer::BigWigFile(er)
 })
 
 setClass("dbSNPVCFFileResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "dbSNPVCFFileResource",
-    function(x, ...) 
+    function(x, ..., force=FALSE)
 {
     .require("VariantAnnotation")
     withCallingHandlers({
         ## retrieve the resource
-        er <- cache(getHub(x))
+        er <- cache(getHub(x), force=force)
     }, warning=function(w) {
         if (grepl("^Failed to parse headers:", conditionMessage(w))[1])
             ## warning() something different, or...
             invokeRestart("muffleWarning")
     })
-    VariantAnnotation::VcfFile(file=er[1],index=er[2]) 
+    VariantAnnotation::VcfFile(file=er[1],index=er[2])
 })
 ## SQLiteFile
 
-setClass("SQLiteFileResource", contains="AnnotationHubResource") 
+setClass("SQLiteFileResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "SQLiteFileResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
-    AnnotationDbi::loadDb(cache(getHub(x)))
+    AnnotationDbi::loadDb(cache(getHub(x), force=force))
 })
 
 ## GRASP2 SQLiteFile
@@ -189,18 +189,18 @@ setMethod(".get1", "SQLiteFileResource",
 setClass("GRASPResource", contains="SQLiteFileResource")
 
 setMethod(".get1", "GRASPResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
-    RSQLite::dbConnect(RSQLite::SQLite(), cache(getHub(x)),
+    RSQLite::dbConnect(RSQLite::SQLite(), cache(getHub(x), force=force),
         flags=RSQLite::SQLITE_RO)
 })
 
 setClass("ZipResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "ZipResource",
-    function(x, filenames, ...)
+    function(x, filenames, ..., force=FALSE)
 {
-    zip <- cache(getHub(x))
+    zip <- cache(getHub(x), force=force)
     for (fl in filenames)
         unzip(zip, fl, exdir=tempdir())
     file.path(tempdir(), filenames)
@@ -209,31 +209,31 @@ setMethod(".get1", "ZipResource",
 setClass("ChEAResource", contains="ZipResource")
 
 setMethod(".get1", "ChEAResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
-    fl <- callNextMethod(x, filenames="chea-background.csv")
-    read.csv(fl, header=FALSE, stringsAsFactors=FALSE, 
-        col.names=c("s.no","TranscriptionFactor", "TranscriptionFactor-PubmedID", 
+    fl <- callNextMethod(x, filenames="chea-background.csv", force=force)
+    read.csv(fl, header=FALSE, stringsAsFactors=FALSE,
+        col.names=c("s.no","TranscriptionFactor", "TranscriptionFactor-PubmedID",
         "TranscriptionFactorTarget", "PubmedID", "Experiment", "CellType",
         "Species","DateAdded"))
-}) 
+})
 
 setClass("BioPaxResource", contains="RdaResource")
 
 setMethod(".get1", "BioPaxResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("rBiopaxParser")
-    callNextMethod(x, ...)
+    callNextMethod(x, ..., force=force)
 })
- 
+
 setClass("PazarResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "PazarResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("GenomicRanges")
-    er <- cache(getHub(x))
+    er <- cache(getHub(x), force=force)
     colClasses <-
         setNames(c(rep("character", 6), rep("integer", 2),
                    rep("factor", 2), "character", "NULL"),
@@ -250,16 +250,16 @@ setMethod(".get1", "PazarResource",
     }
     dat
 })
- 
+
 
 setClass("CSVtoGrangesResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "CSVtoGrangesResource",
-   function(x, ...)
+   function(x, ..., force=FALSE)
 {
     .require("GenomicRanges")
     yy <- getHub(x)
-    dat <- read.csv(cache(yy), header=TRUE, stringsAsFactors=FALSE)
+    dat <- read.csv(cache(yy, force=force), header=TRUE, stringsAsFactors=FALSE)
     dat <- dat[,!(names(dat) %in% "width")]
     gr <- GenomicRanges::makeGRangesFromDataFrame(dat, keep.extra.columns=TRUE)
     .tidyGRanges(x, gr)
@@ -268,20 +268,20 @@ setMethod(".get1", "CSVtoGrangesResource",
 setClass("ExpressionSetResource", contains="RdaResource")
 
 setMethod(".get1", "ExpressionSetResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("Biobase")
-    callNextMethod(x, ...)
+    callNextMethod(x, ..., force=force)
 })
 
 # GDS
 setClass("GDSResource", contains="AnnotationHubResource")
 
 setMethod(".get1", "GDSResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("gdsfmt")
-    yy <- cache(getHub(x))
+    yy <- cache(getHub(x), force=force)
     dat <- gdsfmt::openfn.gds(yy)
 })
 
@@ -289,8 +289,8 @@ setMethod(".get1", "GDSResource",
 setClass("H5FileResource", contains = "AnnotationHubResource")
 
 setMethod(".get1", "H5FileResource",
-    function(x, ...)
+    function(x, ..., force=FALSE)
 {
     .require("rhdf5")
-    cache(getHub(x))
+    cache(getHub(x), force=force)
 })

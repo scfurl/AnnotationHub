@@ -114,9 +114,9 @@ setMethod("package", "Hub",
 
 ## FIXME: rather not pass cache.root and cache.fun
 setMethod("cache", "Hub",
-    function(x, ..., cache.root, cache.fun, proxy, max.downloads)
+    function(x, ..., cache.root, cache.fun, proxy, max.downloads, force=FALSE)
         .cache_internal(x, cache.root=cache.root, cache.fun=cache.fun, 
-                        proxy=proxy, max.downloads=max.downloads)
+                        proxy=proxy, max.downloads=max.downloads, force=force)
 )
 
 setReplaceMethod("cache", "Hub",
@@ -238,20 +238,20 @@ setReplaceMethod("[",
 })
 
 setMethod("[[", c("Hub", "numeric", "missing"),
-    function(x, i, j, ...)
+    function(x, i, j, ..., force=FALSE)
 {
-    .Hub_get1(x[i])
+    .Hub_get1(x[i], force=force)
 })
 
 setMethod("[[", c("Hub", "character", "missing"),
-    function(x, i, j, ...)
+    function(x, i, j, ..., force=FALSE)
 {
     if (length(i) != 1L)
         stop("'i' must be length 1")
     idx <- match(i, names(.db_uid(x)))
     if (is.na(idx))
         stop(recordStatus(x, i)$status)
-    .Hub_get1(x[idx])
+    .Hub_get1(x[idx], force=force)
 })
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,5 +1,3 @@
-
-
 .cache_path <- function(hub, path, cache.root=NULL, cache.fun=NULL)
 {
     cache <- hubCache(hub)
@@ -51,9 +49,12 @@
     file.path(cache, sqlitefile)
 }
 
-.cache_download_ok <- function(cachepath, max.downloads)
+.cache_download_ok <- function(cachepath, max.downloads, force=FALSE)
 {
-    need <- !file.exists(cachepath)
+    if (force)
+        need <- rep(TRUE, length(cachepath))
+    else
+        need <- !file.exists(cachepath)
     n <- sum(need)
 
     if (n > max.downloads) {
@@ -74,14 +75,14 @@
     need
 }
 
-.cache_internal <- function(x, cache.root, cache.fun, proxy, max.downloads)
+.cache_internal <- function(x, cache.root, cache.fun, proxy, max.downloads, force=FALSE)
 {
     cachepath <- .named_cache_path(x, cache.root, cache.fun)
-    need <- .cache_download_ok(cachepath, max.downloads)
+    need <- .cache_download_ok(cachepath, max.downloads, force)
 
     ok <- .hub_resource(
         .hub_data_path(hubUrl(x)), basename(cachepath)[need],
-        cachepath[need], proxy=proxy
+        cachepath[need], proxy=proxy, overwrite=force
     )
     if (!all(ok))
         stop(sum(!ok), " resources failed to download", call. = FALSE)
@@ -96,7 +97,7 @@
     cachepath
 }
 
-.named_cache_path <- function(x, cache.root, cache.fun) 
+.named_cache_path <- function(x, cache.root, cache.fun)
 {
     stopifnot(is(x, "Hub"))
     path <- .datapathIds(x)
